@@ -1,7 +1,5 @@
-
 if __name__ == "__main__":
-    with open("data/day_4.txt") as f:
-        
+    with open("2023/data/day_4.txt") as f:
         res = []
         for row in f:
             c = -1
@@ -14,25 +12,20 @@ if __name__ == "__main__":
                 if i in list_2:
                     c += 1
             if c > -1:
-                res.append(2 ** c)
+                res.append(2**c)
 
         print(sum(res))
 
-    with open("data/day_4.txt") as f:
-        
-        res = []
+    with open("2023/data/day_4.txt") as f:
         file_rows = [row.strip() for row in f]
 
         res = []
 
-
         for row in file_rows:
-
             new_rows = [row]
             ind = 0
             while True:
-                
-                c = 1 
+                c = 1
                 try:
                     id_str, lines = new_rows[ind].split(":")
                     id = int(id_str.split()[-1]) - 1
@@ -46,15 +39,9 @@ if __name__ == "__main__":
                     if i in list_2:
                         new_rows.append(file_rows[id + c])
                         c += 1
-                    
+
                 ind += 1
 
             res.extend(new_rows)
 
-
         print(len(res))
-
-
-
-
-
