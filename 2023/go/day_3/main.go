@@ -248,7 +248,7 @@ func checkAroundGear(ind []int, i int, data []string) int {
         if len(numDown) > 0 {
             gearNums = append(gearNums, numDown...)
         }
-        
+        =BUSCARV(H5,$B$5:$B$1274,1,FALSO)
     }
 
     fmt.Println(gearNums)

@@ -103,7 +103,6 @@ func partOne(data []string) int {
 	for _, line := range data {
 
 		row := splitRow(line)
-		fmt.Println(row)
 
 		c := -1
 
@@ -137,33 +136,34 @@ func partTwo(data []string) int {
 	c := 0
 
 	for i, line := range data {
+
 		c = i + 1
 		row := splitRow(line)
 		times := 1
 		times = times + total[c]
-		fmt.Println("\n -> ", c, times)
 
+		add(total, i+1)
 		for j := 0; j < times; j++ {
-            add(c, 1, &total)
-
+			c = i + 2
 			for _, number := range row.numbers {
 				if s := intInSlice(number, row.winningNumbers); s {
-
-					fmt.Println("-> ", c)
-                    add(c, 1, &total)
+					add(total, c)
 					c += 1
 				}
 			}
 
 		}
 	}
+    
+    for _, v := range total{
+        result += v 
+    }
 
-	fmt.Println(total)
-
-	return result
+	return result 
 }
 
-func add(dict *map) {
+
+func add(dict map[int]int, c int) {
 	if _, ok := dict[c]; ok {
 		dict[c] = dict[c] + 1
 	} else {
