@@ -4,11 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
-    "slices"
-    "sync"
 )
+
+type Ranges struct {
+	start int
+	end   int
+}
 
 type Maps struct {
 	sourceStart      []int
@@ -64,95 +68,63 @@ func getSeeds(row string) []int {
 	return iSeeds
 }
 
-
 func getMaps(data []string) map[string]*Maps {
 
-    maps := make(map[string]*Maps)
-    var currentMapKey string
+	maps := make(map[string]*Maps)
+	var currentMapKey string
 
-    for _, row := range data[2:] {
-        if row == "" {
-            continue
-        }
-        rowStr := strings.Split(row, " ")[0]
+	for _, row := range data[2:] {
+		if row == "" {
+			continue
+		}
+		rowStr := strings.Split(row, " ")[0]
 		_, err := strconv.Atoi(rowStr)
-        if err != nil {
-            currentMapKey = rowStr
-            maps[currentMapKey] = new(Maps)
-        } else {
-            seedsStr := strings.Split(row, " ")
-            var mapVals []int
-            for _, val := range seedsStr {
-		        valInt, _ := strconv.Atoi(val)
-                mapVals = append(mapVals, valInt)
-            }
-            maps[currentMapKey].sourceStart = append(maps[currentMapKey].sourceStart, mapVals[1])
-            maps[currentMapKey].destinationStart  = append(maps[currentMapKey].destinationStart, mapVals[0])
-            maps[currentMapKey].step  = append(maps[currentMapKey].step, mapVals[2])
-        }
-    }
+		if err != nil {
+			currentMapKey = rowStr
+			maps[currentMapKey] = new(Maps)
+		} else {
+			seedsStr := strings.Split(row, " ")
+			var mapVals []int
+			for _, val := range seedsStr {
+				valInt, _ := strconv.Atoi(val)
+				mapVals = append(mapVals, valInt)
+			}
+			maps[currentMapKey].sourceStart = append(maps[currentMapKey].sourceStart, mapVals[1])
+			maps[currentMapKey].destinationStart = append(maps[currentMapKey].destinationStart, mapVals[0])
+			maps[currentMapKey].step = append(maps[currentMapKey].step, mapVals[2])
+		}
+	}
 
-    return maps
+	return maps
 
 }
 
 func seedRange(seed []int, sourceRange, destRange, step []int) []int {
 
-    newSeed := make([]int, len(seed))
-    for i := range newSeed {
-        newSeed[i] = -1
-    }
+	newSeed := make([]int, len(seed))
+	for i := range newSeed {
+		newSeed[i] = -1
+	}
 
+	for i := 0; i < len(sourceRange); i++ {
+		for j, s := range seed {
+			if s >= sourceRange[i] && s < (sourceRange[i]+step[i]) {
+				convSeed := destRange[i] + (s - sourceRange[i])
+				// fmt.Println(seed, convSeed, i)
+				newSeed[j] = convSeed
+			}
 
-    for i := 0; i < len(sourceRange);i++ {
-        for j, s := range seed {
-            if s >= sourceRange[i] && s < (sourceRange[i] + step[i]) {
-                convSeed := destRange[i] + (s - sourceRange[i])
-                // fmt.Println(seed, convSeed, i)
-                newSeed[j] = convSeed
-            }
+		}
 
-        }
-         
-    }
+	}
 
-    for i, s := range newSeed {
-        if s == -1 {
-            newSeed[i] = seed[i]
-        }
-    }
+	for i, s := range newSeed {
+		if s == -1 {
+			newSeed[i] = seed[i]
+		}
+	}
 
-    return newSeed
-
-}
-
-func seedRangeReload(seed []int, sourceRange, destRange, step []int) []int {
-
-    newSeed := make([]int, len(seed))
-    for i := range newSeed {
-        newSeed[i] = -1
-    }
-
-
-    for i := 0; i < len(sourceRange);i++ {
-        for j, s := range seed {
-            if s >= sourceRange[i] && s < (sourceRange[i] + step[i]) {
-                convSeed := destRange[i] + (s - sourceRange[i])
-                // fmt.Println(seed, convSeed, i)
-                newSeed[j] = convSeed
-            }
-
-        }
-         
-    }
-
-    for i, s := range newSeed {
-        if s == -1 {
-            newSeed[i] = seed[i]
-        }
-    }
-
-    return newSeed
+	return newSeed
 
 }
 
@@ -160,60 +132,103 @@ func partOne(data []string) int {
 
 	iSeeds := getSeeds(data[0])
 
-	fmt.Println(iSeeds)
-    maps := getMaps(data)
+	maps := getMaps(data)
 	// fmt.Println(maps)
-    for _, row := range data[1:] {
-        rowStr := strings.Split(row, " ")[0]
+	for _, row := range data[1:] {
+		rowStr := strings.Split(row, " ")[0]
 		_, err := strconv.Atoi(rowStr)
-        if err == nil || row == "" {
-            continue
-        }
-        // fmt.Println(maps[/* ro */wStr])
-        iSeeds = seedRange(iSeeds, maps[rowStr].sourceStart, maps[rowStr].destinationStart, maps[rowStr].step)
+		if err == nil || row == "" {
+			continue
+		}
+		// fmt.Println(maps[/* ro */wStr])
+		iSeeds = seedRange(iSeeds, maps[rowStr].sourceStart, maps[rowStr].destinationStart, maps[rowStr].step)
 	}
-	return slices.Min(iSeeds) 
+	return slices.Min(iSeeds)
 }
 
 func partTwo(data []string) int {
 
 	iSeeds := getSeeds(data[0])
 
-    wg := sync.WaitGroup{}
-    minRes := []int{}
+	iSeedsRange := seedRanges(iSeeds)
+	maps := getMaps(data)
+	var newSeedsRange []Ranges
 
-    for i:=0;i<len(iSeeds);i=i+2{
-        wg.Add(1)
-        go func(data []string, seedStart, seedEnd int){
-            num := seedBuildBF(data, seedStart, seedEnd) 
-            minRes = append(minRes, num)
-            wg.Done()
-        }(data, iSeeds[i], iSeeds[i+1])
-    }
-
-    wg.Wait()
-    fmt.Println(minRes)
-	return slices.Min(minRes) 
-    // return 0
-}
-
-func seedBuildBF(data []string, seedStart, seedEnd int) int {
-
-    var iSeedsBF []int
-    for j:=0;j<seedEnd;j++{
-        iSeedsBF = append(iSeedsBF, seedStart + j)
-    }
-
-    maps := getMaps(data)
-	// fmt.Println(maps)
-    for _, row := range data[1:] {
-        rowStr := strings.Split(row, " ")[0]
+	for _, row := range data[1:] {
+		rowStr := strings.Split(row, " ")[0]
 		_, err := strconv.Atoi(rowStr)
-        if err == nil || row == "" {
-            continue
-        }
-        iSeedsBF = seedRange(iSeedsBF, maps[rowStr].sourceStart, maps[rowStr].destinationStart, maps[rowStr].step)
+		if err == nil || row == "" {
+			continue
+		}
+
+		newSeedsRange = []Ranges{}
+		for len(iSeedsRange) > 0 {
+
+			notMap := true
+			// get the current seed Range
+			currentSeed := iSeedsRange[0]
+			// pop from slice
+			iSeedsRange = iSeedsRange[1:]
+            // iterate through all the mappins in a block for the current seed
+			for i := 0; i < len(maps[rowStr].destinationStart); i++ {
+                // Get the mapping values
+				sourceMap := maps[rowStr].sourceStart[i]
+				destMap := maps[rowStr].destinationStart[i]
+				step := maps[rowStr].step[i]
+				// get lower bound
+				minBound := max(sourceMap, currentSeed.start)
+				// get upper bound
+				upBound := min(sourceMap+step, currentSeed.end)
+                // range exists
+				if minBound < upBound {
+					notMap = false
+					newSeedsRange = append(newSeedsRange, Ranges{
+						start: minBound - sourceMap + destMap,
+						end:   upBound - sourceMap + destMap})
+                    // create new leftover to right range if exists
+					if minBound > currentSeed.start {
+						iSeedsRange = append(iSeedsRange, Ranges{
+							start: currentSeed.start,
+							end:   minBound,
+						})
+					}
+                    // create new leftover to right range if exists
+					if currentSeed.end > upBound {
+						iSeedsRange = append(iSeedsRange, Ranges{
+							start: upBound,
+							end:   currentSeed.end,
+						})
+					}
+					break
+
+				}
+			}
+
+			if notMap == true {
+                // no mapping applied range as is
+				newSeedsRange = append(newSeedsRange, currentSeed)
+			}
+		}
+        // all new ranges are the new input to continue
+		iSeedsRange = newSeedsRange
 	}
 
-    return slices.Min(iSeedsBF)
+    // get the minimun
+	var minVals []int
+	for _, seedRange := range newSeedsRange {
+		minVals = append(minVals, seedRange.start)
+	}
+	return slices.Min(minVals)
+}
+
+func seedRanges(iSeeds []int) []Ranges {
+
+	var seedsRange []Ranges
+
+	for i := 0; i < len(iSeeds)-1; i = i + 2 {
+		seedRange := Ranges{start: iSeeds[i], end: iSeeds[i] + iSeeds[i+1]}
+		seedsRange = append(seedsRange, seedRange)
+	}
+
+	return seedsRange
 }
