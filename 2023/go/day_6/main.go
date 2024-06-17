@@ -37,7 +37,7 @@ func readFile(route string) []string {
 func main() {
 	// New day
 	fmt.Println("===========================")
-	fmt.Println("Advent of Code 2023: Day 5")
+	fmt.Println("Advent of Code 2023: Day 6")
 	fmt.Println("===========================")
 
 	data := readFile("2023/data/day_6.txt")
